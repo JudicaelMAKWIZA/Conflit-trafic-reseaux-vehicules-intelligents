@@ -4,15 +4,7 @@ from abc import ABC, abstractmethod
 from traffic_conflict.communication.v2v_bus import communicated_states
 from traffic_conflict.domain.enums import ActionType
 from traffic_conflict.domain.models import VehicleAction
-
-
-def in_control_zone(state, config):
-    return state.road_id.endswith("_in") and state.distance_to_junction <= config["control"]["zone_distance"]
-
-
-def cleared(state, config):
-    return state is None or (state.road_id.endswith("_out") and
-                             state.lane_position >= state.length + config["control"]["clearance_distance"])
+from traffic_conflict.domain.geometry import in_control_zone, cleared
 
 
 class ResolverStrategy(ABC):
