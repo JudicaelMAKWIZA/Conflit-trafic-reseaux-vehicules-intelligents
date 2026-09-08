@@ -119,15 +119,24 @@ def _normal_demand(config: dict, seed: int) -> list[dict]:
 def build_scenario(scenario: str = "S0", seed: int = 1,
                    output_dir: Path | None = None, config: dict | None = None) -> Path:
     """Write reproducible scenario inputs and return the absolute .sumocfg path."""
-    if scenario != "S0":
-        raise ValueError("Seul S0 est disponible à cette phase du pilote")
+    if scenario not in ("S0", "S1"):
+        raise ValueError("Seuls S0 et S1 sont disponibles à cette phase du pilote")
     settings = deepcopy(config) if config is not None else load_config(scenario)
     validate_config(settings)
     if settings.get("scenario", scenario) != scenario:
         raise ValueError("La configuration ne correspond pas au scénario demandé")
     folder = (Path(output_dir) if output_dir is not None else
-              ROOT / "scenarios" / "normal" / f"seed_{seed:03d}").resolve()
-    vehicles = _normal_demand(settings, seed)
+              ROOT / "scenarios" / settings["name"] / f"seed_{seed:03d}").resolve()
+    if scenario == "S0":
+        vehicles = _normal_demand(settings, seed)
+    else:
+        rng = random.Random(seed)
+        demand = settings["demand"]
+        vehicles = [{"vehicle_id": f"S1_{approach}_{index:03d}", "approach": approach,
+                     "movement": demand["movement"], "route_id": f"r_{approach}_{demand['movement']}",
+                     "depart": round(demand["start"] + rng.uniform(0, demand["arrival_jitter"]), 6)}
+                    for index, approach in enumerate(demand["approaches"])]
+        vehicles.sort(key=lambda item: (item["depart"], item["vehicle_id"]))
     net_path = build_network(settings, folder)
     routes = ET.Element("routes")
     vehicle_config = settings["vehicle"]
@@ -182,7 +191,7 @@ def build_scenario(scenario: str = "S0", seed: int = 1,
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Construire les entrées du scénario SUMO S0")
-    parser.add_argument("--scenario", choices=["S0"], default="S0")
+    parser.add_argument("--scenario", choices=["S0", "S1"], default="S0")
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--config", type=Path, help="YAML de surcharges du scénario")

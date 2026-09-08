@@ -16,8 +16,6 @@ def main():
     parser.add_argument("--config", type=Path)
     parser.add_argument("--gui", action="store_true")
     args = parser.parse_args()
-    if args.method != "observe":
-        parser.error("Seule l'observation est disponible à cette phase")
     result = run_experiment(args.scenario, args.method, args.seed, args.output_dir,
                             load_config(args.scenario, args.config), gui=args.gui)
     print(json.dumps(result, indent=2))

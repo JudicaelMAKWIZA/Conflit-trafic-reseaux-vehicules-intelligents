@@ -13,6 +13,8 @@ import yaml
 from traffic_conflict.communication.v2v_bus import V2VBus
 from traffic_conflict.config import ROOT, load_config
 from traffic_conflict.detection.traffic_state import TrafficStateEstimator
+from traffic_conflict.control.action_controller import ActionController
+from traffic_conflict.resolution.registry import make_resolver
 from traffic_conflict.simulation.scenario_loader import build_scenario
 from traffic_conflict.simulation.state_collector import StateCollector
 from traffic_conflict.simulation.sumo_client import SumoClient, tool_versions
@@ -32,6 +34,8 @@ def git_revision():
 def run_experiment(scenario="S0", method="observe", seed=1, output_dir=None,
                    config=None, resolver=None, controller_class=None, gui=False):
     config = config or load_config(scenario)
+    resolver = resolver or make_resolver(method, config)
+    controller_class = controller_class or (ActionController if resolver else None)
     output = Path(output_dir or ROOT / "outputs/runs" / f"{scenario}_{config['name']}" / method / f"seed_{seed:03d}").resolve()
     output.mkdir(parents=True, exist_ok=True)
     sumocfg = build_scenario(scenario, seed, output / "scenario", config)
