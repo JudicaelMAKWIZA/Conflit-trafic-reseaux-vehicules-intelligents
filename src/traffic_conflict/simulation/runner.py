@@ -15,6 +15,7 @@ from traffic_conflict.config import ROOT, load_config
 from traffic_conflict.detection.traffic_state import TrafficStateEstimator
 from traffic_conflict.control.action_controller import ActionController
 from traffic_conflict.resolution.registry import make_resolver
+from traffic_conflict.metrics.collector import MetricsCollector
 from traffic_conflict.simulation.scenario_loader import build_scenario
 from traffic_conflict.simulation.state_collector import StateCollector
 from traffic_conflict.simulation.sumo_client import SumoClient, tool_versions
@@ -44,6 +45,7 @@ def run_experiment(scenario="S0", method="observe", seed=1, output_dir=None,
                 "created_utc": datetime.now(timezone.utc).isoformat(), **tool_versions()}
     (output / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     bus, estimator = V2VBus(), TrafficStateEstimator(config)
+    metrics = MetricsCollector()
     completed, departed_ids = set(), set()
     collisions, teleports, controller_errors = 0, 0, 0
     trajectory_fields = ["time", "vehicle_id", "x", "y", "speed", "lane_id", "road_id", "route_id",
@@ -72,6 +74,7 @@ def run_experiment(scenario="S0", method="observe", seed=1, output_dir=None,
             states = collector.collect()
             views = bus.broadcast(states)
             snapshot = estimator.update(states, views, time, departed, arrived)
+            metrics.observe(snapshot)
             requested = resolver.resolve(snapshot, views, context) if resolver else []
             applied = controller.apply(requested, states) if controller else []
             action_by_id = {item["vehicle_id"]: item["applied_action"] for item in applied}
@@ -102,4 +105,4 @@ def run_experiment(scenario="S0", method="observe", seed=1, output_dir=None,
                "completed_trip_count": len(completed), "collision_count": collisions, "teleport_count": teleports,
                "controller_error_count": controller_errors, "output_dir": str(output)}
     (output / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    return summary
+    return metrics.finalize(output)
