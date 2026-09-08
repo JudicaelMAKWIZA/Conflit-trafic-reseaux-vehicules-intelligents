@@ -77,6 +77,9 @@ def run_experiment(scenario="S0", method="observe", seed=1, output_dir=None,
             metrics.observe(snapshot)
             requested = resolver.resolve(snapshot, views, context) if resolver else []
             applied = controller.apply(requested, states) if controller else []
+            decision = context.pop("decision", None)
+            if decision:
+                ef.write(json.dumps({"time": time, "type": "decision", **decision}) + "\n")
             action_by_id = {item["vehicle_id"]: item["applied_action"] for item in applied}
             controller_errors += sum(bool(item["error"]) for item in applied)
             for item in applied:
