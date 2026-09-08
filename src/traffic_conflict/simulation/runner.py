@@ -5,6 +5,7 @@ import csv
 from dataclasses import asdict
 from datetime import datetime, timezone
 import json
+import hashlib
 from pathlib import Path
 import subprocess
 
@@ -32,6 +33,18 @@ def git_revision():
             return None
 
 
+def simulation_fingerprint():
+    """Empreinte du code physique/contrôle/métriques, indépendante du rapport."""
+    files = list((ROOT / "src/traffic_conflict").rglob("*.py")) + list((ROOT / "configs").glob("*.yaml")) + [ROOT / "requirements.txt"]
+    digest = hashlib.sha256()
+    for path in sorted(files):
+        if "reporting" in path.parts or path.name == "aggregate.py":
+            continue
+        digest.update(path.relative_to(ROOT).as_posix().encode())
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
 def run_experiment(scenario="S0", method="observe", seed=1, output_dir=None,
                    config=None, resolver=None, controller_class=None, gui=False):
     config = config or load_config(scenario)
@@ -42,6 +55,8 @@ def run_experiment(scenario="S0", method="observe", seed=1, output_dir=None,
     sumocfg = build_scenario(scenario, seed, output / "scenario", config)
     (output / "config.yaml").write_text(yaml.safe_dump(config, allow_unicode=True, sort_keys=False), encoding="utf-8")
     metadata = {"scenario": scenario, "method": method, "seed": seed, "git_commit": git_revision(),
+                "simulation_source_sha256": simulation_fingerprint(),
+                "config_sha256": hashlib.sha256((output / "config.yaml").read_bytes()).hexdigest(),
                 "created_utc": datetime.now(timezone.utc).isoformat(), **tool_versions()}
     (output / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     bus, estimator = V2VBus(), TrafficStateEstimator(config)
