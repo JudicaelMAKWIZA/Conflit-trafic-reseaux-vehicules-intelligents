@@ -1,7 +1,9 @@
 scenario: S2
 name: congestion
 simulation:
-  duration: 300.0
+  duration: 420.0
+control:
+  congestion_regulation: true
 demand:
   start: 1.0
   high_duration: 80.0

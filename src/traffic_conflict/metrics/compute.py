@@ -12,6 +12,44 @@ def finite_stat(values, statistic):
     return float(statistic(values)) if len(values) else None
 
 
+def summarize_approach_fairness(manifest_vehicles, last_states, completed_ids):
+    """Conserver chaque approche demandée, y compris les véhicules non insérés.
+
+    L'attente des trajets inachevés est une observation censurée, séparée de
+    l'attente des trajets terminés. Un véhicule jamais observé n'a pas une
+    attente nulle. L'écart-type principal n'est interprétable qu'une fois toute
+    la demande terminée ; sa variante ``observed`` porte sur les seuls terminés.
+    """
+    expected = {}
+    for vehicle in manifest_vehicles:
+        expected.setdefault(str(vehicle["approach"]), set()).add(vehicle["vehicle_id"])
+    observed_ids = set(last_states.vehicle_id)
+    completed_ids = set(completed_ids)
+    summary = {key: {} for key in (
+        "expected_by_approach", "departed_by_approach", "completed_by_approach",
+        "unfinished_by_approach", "waiting_by_approach_s",
+        "unfinished_observed_waiting_by_approach_s")}
+    for approach, expected_ids in sorted(expected.items()):
+        completed = expected_ids & completed_ids
+        unfinished = expected_ids - completed_ids
+        finished_wait = last_states.loc[last_states.vehicle_id.isin(completed), "cumulative_waiting_time"]
+        censored_wait = last_states.loc[last_states.vehicle_id.isin(unfinished), "cumulative_waiting_time"]
+        summary["expected_by_approach"][approach] = len(expected_ids)
+        summary["departed_by_approach"][approach] = len(expected_ids & (observed_ids | completed_ids))
+        summary["completed_by_approach"][approach] = len(completed)
+        summary["unfinished_by_approach"][approach] = len(unfinished)
+        summary["waiting_by_approach_s"][approach] = finite_stat(finished_wait.to_numpy(), np.mean)
+        summary["unfinished_observed_waiting_by_approach_s"][approach] = finite_stat(censored_wait.to_numpy(), np.mean)
+    all_means = list(summary["waiting_by_approach_s"].values())
+    observed_means = np.array([value for value in all_means if value is not None])
+    complete = all(count == 0 for count in summary["unfinished_by_approach"].values())
+    observed_std = finite_stat(observed_means, np.std)
+    summary["fairness_complete"] = complete
+    summary["fairness_observed_std_wait_s"] = observed_std
+    summary["fairness_std_wait_s"] = observed_std if complete and len(observed_means) == len(all_means) else None
+    return summary
+
+
 def compute_metrics(output_dir):
     root = Path(output_dir)
     config = yaml.safe_load((root / "config.yaml").read_text(encoding="utf-8"))
@@ -48,7 +86,7 @@ def compute_metrics(output_dir):
     actions = [e for e in events if e["type"] == "action"]
     errors = sum(bool(e["error"]) for e in actions)
     valid = collisions == teleports == errors == 0
-    per_approach = {str(k): float(v) for k, v in complete_states.groupby("approach").cumulative_waiting_time.mean().items()}
+    fairness = summarize_approach_fairness(manifest["vehicles"], last, completed_ids)
     queues = steps[["queue_N", "queue_E", "queue_S", "queue_W"]].to_numpy()
     congested = steps.loc[steps.state == "CONGESTED", "time"]
     normal_times = set(steps.loc[steps.state == "NORMAL", "time"])
@@ -79,9 +117,7 @@ def compute_metrics(output_dir):
         "mean_queue_length_veh": float(queues.mean()), "max_queue_length_veh": int(queues.max()),
         "travel_time_s": finite_stat(np.array([float(t["duration"]) for t in completed]), np.mean),
         "depart_delay_mean_s": finite_stat(np.array([float(t["departDelay"]) for t in completed]), np.mean),
-        "waiting_by_approach_s": per_approach,
-        "completed_by_approach": {str(k): int(v) for k, v in complete_states.groupby("approach").size().items()},
-        "fairness_std_wait_s": finite_stat(np.array(list(per_approach.values())), np.std),
+        **fairness,
         "collision_count": collisions, "teleport_count": teleports, "controller_error_count": errors,
         "action_count": sum(e["applied_action"] != "KEEP" and not e["error"] for e in actions),
         "stop_count": sum(e["applied_action"] == "STOP" for e in actions),

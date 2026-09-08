@@ -5,6 +5,7 @@ from statistics import mean
 from traffic_conflict.domain.models import TrafficSnapshot
 from traffic_conflict.domain.enums import TrafficState
 from traffic_conflict.detection.deadlock import DeadlockDetector
+from traffic_conflict.detection.congestion import CongestionDetector
 from traffic_conflict.communication.v2v_bus import communicated_states
 
 
@@ -13,6 +14,7 @@ class TrafficStateEstimator:
         self.config = config
         self.flows = deque()
         self.deadlock = DeadlockDetector(config)
+        self.congestion = CongestionDetector(config)
 
     def update(self, states, v2v_views, time, departed=(), arrived=()):
         self.flows.append((time, len(departed), len(arrived)))
@@ -30,7 +32,10 @@ class TrafficStateEstimator:
             entries_in_window=sum(item[1] for item in self.flows),
             exits_in_window=sum(item[2] for item in self.flows))
         diagnostic = self.deadlock.update(communicated_states(states, v2v_views), time)
-        snapshot.diagnostics = {"deadlock": diagnostic}
+        congestion = self.congestion.update(snapshot)
+        snapshot.diagnostics = {"deadlock": diagnostic, "congestion": congestion}
         if diagnostic["is_deadlock"]:
             snapshot.traffic_state = TrafficState.DEADLOCK
+        elif congestion["is_congested"]:
+            snapshot.traffic_state = TrafficState.CONGESTED
         return snapshot

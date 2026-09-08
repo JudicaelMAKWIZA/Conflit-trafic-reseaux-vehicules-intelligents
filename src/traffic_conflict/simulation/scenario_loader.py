@@ -119,8 +119,8 @@ def _normal_demand(config: dict, seed: int) -> list[dict]:
 def build_scenario(scenario: str = "S0", seed: int = 1,
                    output_dir: Path | None = None, config: dict | None = None) -> Path:
     """Write reproducible scenario inputs and return the absolute .sumocfg path."""
-    if scenario not in ("S0", "S1"):
-        raise ValueError("Seuls S0 et S1 sont disponibles à cette phase du pilote")
+    if scenario not in ("S0", "S1", "S2"):
+        raise ValueError("Scénarios disponibles : S0, S1, S2")
     settings = deepcopy(config) if config is not None else load_config(scenario)
     validate_config(settings)
     if settings.get("scenario", scenario) != scenario:
@@ -129,13 +129,35 @@ def build_scenario(scenario: str = "S0", seed: int = 1,
               ROOT / "scenarios" / settings["name"] / f"seed_{seed:03d}").resolve()
     if scenario == "S0":
         vehicles = _normal_demand(settings, seed)
-    else:
+    elif scenario == "S1":
         rng = random.Random(seed)
         demand = settings["demand"]
         vehicles = [{"vehicle_id": f"S1_{approach}_{index:03d}", "approach": approach,
                      "movement": demand["movement"], "route_id": f"r_{approach}_{demand['movement']}",
                      "depart": round(demand["start"] + rng.uniform(0, demand["arrival_jitter"]), 6)}
                     for index, approach in enumerate(demand["approaches"])]
+        vehicles.sort(key=lambda item: (item["depart"], item["vehicle_id"]))
+    else:
+        rng = random.Random(seed)
+        demand = settings["demand"]
+        vehicles = []
+        for approach in demand["approaches"]:
+            index = 0
+            for start, duration, headway in (
+                (demand["start"], demand["high_duration"], demand["high_headway"]),
+                (demand["start"] + demand["high_duration"], demand["low_duration"], demand["low_headway"])):
+                if duration <= 0 or headway <= 0:
+                    raise ValueError("Durées et intervalles S2 doivent être positifs")
+                depart = start
+                while depart < start + duration:
+                    actual = round(max(0, depart + rng.uniform(-demand["arrival_jitter"], demand["arrival_jitter"])), 6)
+                    if actual >= settings["simulation"]["duration"]:
+                        raise ValueError("Une arrivée S2 dépasse l'horizon configuré")
+                    vehicles.append({"vehicle_id": f"S2_{approach}_{index:03d}", "approach": approach,
+                                     "movement": demand["movement"], "route_id": f"r_{approach}_{demand['movement']}",
+                                     "depart": actual})
+                    index += 1
+                    depart += headway
         vehicles.sort(key=lambda item: (item["depart"], item["vehicle_id"]))
     net_path = build_network(settings, folder)
     routes = ET.Element("routes")
@@ -191,7 +213,7 @@ def build_scenario(scenario: str = "S0", seed: int = 1,
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Construire les entrées du scénario SUMO S0")
-    parser.add_argument("--scenario", choices=["S0", "S1"], default="S0")
+    parser.add_argument("--scenario", choices=["S0", "S1", "S2"], default="S0")
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--config", type=Path, help="YAML de surcharges du scénario")

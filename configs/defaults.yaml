@@ -26,6 +26,7 @@ control:
   control_interval: 8.0
   release_window: 2.0
   initial_policy: fcfs
+  congestion_regulation: false
   pressure_alpha: 2.0
   wait_normalization: 30.0
   aging_weight: 0.1
@@ -39,7 +40,6 @@ detection:
   congestion_wait: 30.0
   deadlock_persistence: 5.0
   deadlock_min_vehicles: 2
-  progress_distance: 0.5
   flow_window: 10.0
 experiment:
   seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]

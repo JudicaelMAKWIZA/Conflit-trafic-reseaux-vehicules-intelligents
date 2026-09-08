@@ -67,7 +67,7 @@ def test_demand_past_horizon_is_rejected(tmp_path, stub_network):
         scenario_loader.build_scenario(config=config, output_dir=tmp_path)
 
 
-@pytest.mark.parametrize("scenario", ["S2", "S99"])
+@pytest.mark.parametrize("scenario", ["S99"])
 def test_unimplemented_scenarios_are_rejected(scenario, tmp_path):
     with pytest.raises(ValueError, match="disponibles"):
         scenario_loader.build_scenario(scenario, output_dir=tmp_path)
