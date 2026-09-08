@@ -14,13 +14,13 @@ import tempfile
 def binary(name: str) -> str:
     suffix = ".exe" if os.name == "nt" else ""
     candidates = []
+    if os.environ.get("SUMO_HOME"):
+        candidates.append(Path(os.environ["SUMO_HOME"]) / "bin" / (name + suffix))
     try:
         import sumo
         candidates.append(Path(sumo.SUMO_HOME) / "bin" / (name + suffix))
     except ImportError:
         pass
-    if os.environ.get("SUMO_HOME"):
-        candidates.append(Path(os.environ["SUMO_HOME"]) / "bin" / (name + suffix))
     candidates.append(Path(sys.executable).parent / (name + suffix))
     candidates.extend([Path(p) for p in [shutil.which(name)] if p])
     for candidate in candidates:
