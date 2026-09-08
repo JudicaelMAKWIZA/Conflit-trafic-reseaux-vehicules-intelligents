@@ -1,0 +1,13 @@
+scenario: S2
+name: congestion
+simulation:
+  duration: 300.0
+demand:
+  start: 1.0
+  high_duration: 80.0
+  high_headway: 2.8
+  low_duration: 40.0
+  low_headway: 12.0
+  arrival_jitter: 0.4
+  approaches: [N, E]
+  movement: STRAIGHT

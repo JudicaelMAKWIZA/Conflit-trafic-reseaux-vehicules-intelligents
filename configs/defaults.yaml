@@ -1,0 +1,50 @@
+# HYPOTHÈSES DU PILOTE : ces seuils ne sont pas des constantes scientifiques.
+simulation:
+  step_length: 0.2
+  duration: 180.0
+  time_to_teleport: -1
+  collision_action: warn
+  collision_check_junctions: true
+network:
+  arm_length: 150.0
+  speed_limit: 10.0
+  lane_width: 3.2
+vehicle:
+  length: 5.0
+  min_gap: 2.5
+  accel: 2.6
+  decel: 4.5
+  tau: 1.0
+  sigma: 0.0
+  speed_factor: 1.0
+  speed_mode: 31
+control:
+  zone_distance: 55.0
+  stop_margin: 7.0
+  clearance_distance: 8.0
+  stop_duration: 10000.0
+  control_interval: 8.0
+  release_window: 2.0
+  initial_policy: fcfs
+  pressure_alpha: 2.0
+  wait_normalization: 30.0
+  aging_weight: 0.1
+  max_approach_wait: 45.0
+detection:
+  stopped_speed: 0.1
+  queue_speed: 2.0
+  congestion_speed: 2.0
+  congestion_queue: 4
+  congestion_persistence: 8.0
+  congestion_wait: 30.0
+  deadlock_persistence: 5.0
+  deadlock_min_vehicles: 2
+  progress_distance: 0.5
+  flow_window: 10.0
+experiment:
+  seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  development_seeds: [1, 2, 3, 4, 5]
+report:
+  dpi: 180
+  representative_seed: 1
+  max_pages: 10

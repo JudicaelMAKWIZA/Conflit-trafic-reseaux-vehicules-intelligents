@@ -1,0 +1,11 @@
+scenario: S0
+name: normal
+simulation:
+  duration: 190.0
+demand:
+  vehicle_count: 12
+  start: 1.0
+  headway: 12.0
+  arrival_jitter: 0.3
+  approaches: [N, E, S, W]
+  movement: STRAIGHT
