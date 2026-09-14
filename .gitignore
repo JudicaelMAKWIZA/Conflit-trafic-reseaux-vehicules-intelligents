@@ -1,3 +1,4 @@
+# Environnement Python
 .venv/
 __pycache__/
 *.py[cod]
@@ -5,9 +6,32 @@ __pycache__/
 *.egg-info/
 build/
 dist/
-outputs/dev/
-outputs/tmp/
-outputs/reports/preview/
 
-# Sorties locales des expériences manuelles
-outputs/custom/
+# Documentation et conception internes
+docs/
+ARCHITECTURE.md
+EXPERIMENTS.md
+METRICS.md
+NEXT_PHASE_RL.md
+REPORT_SPEC.md
+SPEC.md
+TASKS.md
+DECISIONS.md
+CODEX_MASTER_PROMPT.txt
+prompts/
+
+# Résultats expérimentaux générés
+outputs/
+
+# Rapports internes générés
+reports/
+
+# Logs
+*.log
+
+# Archives locales
+*.zip
+*.7z
+*.rar
+*.tar
+*.tar.gz
