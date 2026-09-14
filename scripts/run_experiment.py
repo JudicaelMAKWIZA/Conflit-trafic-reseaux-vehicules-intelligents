@@ -15,14 +15,27 @@ def main():
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--config", type=Path)
     parser.add_argument("--gui", action="store_true")
+    parser.add_argument(
+        "--gui-delay",
+        type=int,
+        default=0,
+        help="Délai graphique SUMO en millisecondes entre deux pas de simulation"
+    )
     parser.add_argument("--overwrite", action="store_true", help="Remplacer explicitement un run existant")
     args = parser.parse_args()
     config = load_config(args.scenario, args.config)
     output = args.output_dir or ROOT / "outputs/runs" / f"{args.scenario}_{config['name']}" / args.method / f"seed_{args.seed:03d}"
     if (output / "summary.json").exists() and not args.overwrite:
         parser.error("Ce run existe. Choisir --output-dir ou ajouter --overwrite.")
-    result = run_experiment(args.scenario, args.method, args.seed, args.output_dir,
-                            config, gui=args.gui)
+    result = run_experiment(
+        args.scenario,
+        args.method,
+        args.seed,
+        args.output_dir,
+        config,
+        gui=args.gui,
+        gui_delay=args.gui_delay
+    )
     print(json.dumps(result, indent=2))
 
 

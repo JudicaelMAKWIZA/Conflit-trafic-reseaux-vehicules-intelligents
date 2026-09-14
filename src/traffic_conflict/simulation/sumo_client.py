@@ -33,7 +33,14 @@ def find_binary(name: str) -> str:
 
 
 class SumoClient:
-    def __init__(self, config_file: Path, seed: int, output_dir: Path, gui: bool = False):
+    def __init__(
+        self,
+        config_file: Path,
+        seed: int,
+        output_dir: Path,
+        gui: bool = False,
+        gui_delay: int = 0,
+    ):      
         self.output_dir = Path(output_dir).resolve()
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.label = "pilot_" + uuid4().hex
@@ -45,6 +52,9 @@ class SumoClient:
                         "--error-log", str(self.output_dir / "sumo_errors.log")]
         if gui:
             self.command.extend(["--start", "--quit-on-end", "false"])
+
+            if gui_delay > 0:
+                self.command.extend(["--delay", str(gui_delay)])
         self.connection = None
         self.stdout = None
 

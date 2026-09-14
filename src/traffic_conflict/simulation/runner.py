@@ -46,7 +46,8 @@ def simulation_fingerprint():
 
 
 def run_experiment(scenario="S0", method="observe", seed=1, output_dir=None,
-                   config=None, resolver=None, controller_class=None, gui=False):
+                   config=None, resolver=None, controller_class=None, gui=False,
+                   gui_delay=0):
     config = config or load_config(scenario)
     resolver = resolver or make_resolver(method, config)
     controller_class = controller_class or (ActionController if resolver else None)
@@ -72,7 +73,7 @@ def run_experiment(scenario="S0", method="observe", seed=1, output_dir=None,
     with (output / "trajectories.csv").open("w", newline="", encoding="utf-8") as tf, \
          (output / "steps.csv").open("w", newline="", encoding="utf-8") as sf, \
          (output / "events.jsonl").open("w", encoding="utf-8") as ef, \
-         SumoClient(sumocfg, seed, output, gui) as conn:
+         SumoClient(sumocfg, seed, output, gui, gui_delay) as conn:
         trajectory_writer = csv.DictWriter(tf, fieldnames=trajectory_fields)
         step_writer = csv.DictWriter(sf, fieldnames=step_fields)
         trajectory_writer.writeheader()
