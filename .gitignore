@@ -8,3 +8,6 @@ dist/
 outputs/dev/
 outputs/tmp/
 outputs/reports/preview/
+
+# Sorties locales des expériences manuelles
+outputs/custom/
