@@ -38,8 +38,6 @@ def simulation_fingerprint():
     files = list((ROOT / "src/traffic_conflict").rglob("*.py")) + list((ROOT / "configs").glob("*.yaml")) + [ROOT / "requirements.txt"]
     digest = hashlib.sha256()
     for path in sorted(files):
-        if "reporting" in path.parts or path.name == "aggregate.py":
-            continue
         digest.update(path.relative_to(ROOT).as_posix().encode())
         digest.update(path.read_bytes())
     return digest.hexdigest()

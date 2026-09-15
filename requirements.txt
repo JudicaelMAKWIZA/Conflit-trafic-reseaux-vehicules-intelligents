@@ -6,7 +6,5 @@ sumolib==1.27.1
 networkx==3.6.1
 numpy==2.5.3
 pandas==3.0.5
-matplotlib==3.11.1
 PyYAML==6.0.3
 pytest==9.1.1
-reportlab==5.0.1
