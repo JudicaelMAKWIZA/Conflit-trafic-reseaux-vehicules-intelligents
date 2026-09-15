@@ -34,16 +34,13 @@ Les dépendances Python sont définies dans :
 
 ```text
 requirements.txt
-requirements-linux.lock.txt
-requirements-windows.lock.txt
 ```
 
 ## Structure
 
 ```text
 configs/       configurations expérimentales
-scenarios/     scénarios SUMO reproductibles
-scripts/       outils de construction, exécution et validation
+scripts/       outils d'installation, d'exécution et de diagnostic
 src/           code source principal
 tests/         tests unitaires et d'intégration
 README.md      documentation
@@ -91,21 +88,6 @@ Le blocage dans cette première version est volontairement contrôlé et ne repr
 
 Scénario de forte demande destiné à provoquer une congestion durable et à comparer les stratégies de régulation.
 
-## Construction des scénarios
-
-```bash
-bash scripts/python_wsl.sh scripts/build_scenarios.py --scenario S0 --seed 1
-bash scripts/python_wsl.sh scripts/build_scenarios.py --scenario S1 --seed 1
-bash scripts/python_wsl.sh scripts/build_scenarios.py --scenario S2 --seed 1
-```
-
-Les scénarios construits sont enregistrés sous :
-
-```text
-scenarios/normal/
-scenarios/deadlock/
-scenarios/congestion/
-```
 
 ## Exécuter une expérience
 
